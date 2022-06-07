@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\CommentRepository;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Core\Annotation\ApiResource;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=CommentRepository::class)
@@ -12,6 +13,9 @@ use ApiPlatform\Core\Annotation\ApiResource;
  *     attributes={
  *     "pagination_enabled"=true,
  *     "pagination_items_per_page"=20
+ *     },
+ *          normalizationContext={
+ *          "groups"={"comments_read"}
  *     }
  * )
  */
@@ -21,28 +25,33 @@ class Comment
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups({"comments_read", "users_read", "movies_read"})
      */
     private $id;
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class, inversedBy="comments")
      * @ORM\JoinColumn(nullable=false)
+     * @Groups({"comments_read", "movies_read"})
      */
     private $user_id;
 
     /**
      * @ORM\ManyToOne(targetEntity=Movie::class, inversedBy="comments")
      * @ORM\JoinColumn(nullable=false)
+     * @Groups({"comments_read", "users_read"})
      */
     private $movie_id;
 
     /**
      * @ORM\Column(type="text")
+     * @Groups({"comments_read", "users_read","movies_read"})
      */
     private $content;
 
     /**
      * @ORM\Column(type="datetime")
+     * @Groups({"comments_read", "users_read","movies_read"})
      */
     private $date;
 

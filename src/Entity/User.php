@@ -11,10 +11,15 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use ApiPlatform\Core\Annotation\ApiResource;
 use ApiPlatform\Core\Annotation\ApiFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
- * @ApiResource
+ * @ApiResource(
+ *     normalizationContext={
+ *          "groups"={"users_read"}
+ *     }
+ * )
  * @ApiFilter(SearchFilter::class, properties={"firstName":"partial", "lastName":"partial", "email"})
  */
 class User implements UserInterface, PasswordAuthenticatedUserInterface
@@ -23,16 +28,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups({"users_read", "comments_read", "movies_read"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
+     * @Groups({"users_read", "comments_read", "movies_read"})
      */
     private $email;
 
     /**
      * @ORM\Column(type="json")
+     * @Groups({"users_read", "comments_read", "movies_read"})
      */
     private $roles = [];
 
@@ -44,22 +52,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups({"users_read", "comments_read", "movies_read"})
      */
     private $firstName;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups({"users_read", "comments_read", "movies_read"})
      */
     private $lastName;
 
     /**
      * @ORM\OneToMany(targetEntity=Comment::class, mappedBy="user_id")
+     * @Groups({"movies_read"})
+     *
      */
     private $comments;
+
+    /**
+     * @ORM\OneToMany(targetEntity=Movie::class, mappedBy="user")
+     *  @Groups({"users_read"})
+     */
+    private $movie_id;
 
     public function __construct()
     {
         $this->comments = new ArrayCollection();
+        $this->movie_id = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -199,6 +218,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($comment->getUserId() === $this) {
                 $comment->setUserId(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Movie>
+     */
+    public function getMovieId(): Collection
+    {
+        return $this->movie_id;
+    }
+
+    public function addMovieId(Movie $movieId): self
+    {
+        if (!$this->movie_id->contains($movieId)) {
+            $this->movie_id[] = $movieId;
+            $movieId->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMovieId(Movie $movieId): self
+    {
+        if ($this->movie_id->removeElement($movieId)) {
+            // set the owning side to null (unless already changed)
+            if ($movieId->getUser() === $this) {
+                $movieId->setUser(null);
             }
         }
 
