@@ -13,14 +13,20 @@ use ApiPlatform\Core\Annotation\ApiFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
 use Symfony\Component\Serializer\Annotation\Groups;
 
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
  * @ApiResource(
  *     normalizationContext={
  *          "groups"={"users_read"}
- *     }
+ *     },
+ *     denormalizationContext={"disable_type_enforcement"=true}
+ *
  * )
  * @ApiFilter(SearchFilter::class, properties={"firstName":"partial", "lastName":"partial", "email"})
+ * @UniqueEntity("email", message="This email already exixt !")
  */
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -35,6 +41,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @ORM\Column(type="string", length=180, unique=true)
      * @Groups({"users_read", "comments_read", "movies_read"})
+     * @Assert\NotBlank(message="email is required")
+     * @Assert\Email(message="Email adress is not valid")
      */
     private $email;
 
@@ -47,24 +55,39 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var string The hashed password
      * @ORM\Column(type="string")
+     * @Assert\NotBlank(message="Password is required")
      */
     private $password;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Groups({"users_read", "comments_read", "movies_read"})
+     * @Assert\NotBlank(message="first name is required")
+     * @Assert\Length(
+     *      min = 3,
+     *      max = 255,
+     *      minMessage = "First name must be at least 3 characters long",
+     *      maxMessage = "First name cannot be longer than 255 characters"
+     * )
      */
     private $firstName;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Groups({"users_read", "comments_read", "movies_read"})
+     * @Assert\NotBlank(message="last name is required")
+     * @Assert\Length(
+     *      min = 3,
+     *      max = 255,
+     *      minMessage = "Last name must be at least 3 characters long",
+     *      maxMessage = "Last name cannot be longer than 255 characters"
+     * )
      */
     private $lastName;
 
     /**
      * @ORM\OneToMany(targetEntity=Comment::class, mappedBy="user_id")
-     * @Groups({"movies_read"})
+     * @Groups({"users_read"})
      *
      */
     private $comments;

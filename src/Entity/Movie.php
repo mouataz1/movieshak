@@ -11,6 +11,10 @@ use ApiPlatform\Core\Annotation\ApiFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
 use Symfony\Component\Serializer\Annotation\Groups;
 
+use Symfony\Component\Validator\Constraints as Assert;
+
+
+
 /**
  * @ORM\Entity(repositoryClass=MovieRepository::class)
  * @ApiResource(
@@ -18,9 +22,8 @@ use Symfony\Component\Serializer\Annotation\Groups;
  *     "pagination_enabled"=true,
  *     "order": {"date"="desc"}
  *     },
- *          normalizationContext={
- *          "groups"={"movies_read"}
- *     }
+ *     normalizationContext={"groups"={"movies_read"}},
+ *     denormalizationContext={"disable_type_enforcement"=true}
  * )
  * @ApiFilter(SearchFilter::class, properties={"title":"partial"})
  */
@@ -37,30 +40,61 @@ class Movie
     /**
      * @ORM\Column(type="string", length=255)
      * @Groups({"movies_read", "comments_read", "users_read"})
+     * @Assert\NotBlank(message="title is required")
+     * @Assert\Length(
+     *      min = 3,
+     *      max = 50,
+     *      minMessage = "Title must be at least 3 characters long",
+     *      maxMessage = "Title cannot be longer than 50 characters"
+     * )
      */
     private $title;
 
     /**
      * @ORM\Column(type="text", nullable=true)
      * @Groups({"movies_read", "comments_read", "users_read"})
+     * @Assert\NotBlank(message="Description is required")
+     * @Assert\Length(
+     *      min = 3,
+     *      max = 10000,
+     *      minMessage = "Description must be at least 3 characters long",
+     *      maxMessage = "Description cannot be longer than 10000 characters"
+     * )
      */
     private $description;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Groups({"movies_read", "comments_read", "users_read"})
+     *  @Assert\NotBlank(message="image is required")
+     * @Assert\Length(
+     *      min = 3,
+     *      max = 255,
+     *      minMessage = "Image must be at least 3 characters long",
+     *      maxMessage = "Image cannot be longer than 255 characters"
+     * )
+     *
      */
     private $image;
 
     /**
      * @ORM\Column(type="string", length=255)
      * @Groups({"movies_read", "comments_read", "users_read"})
+     * @Assert\NotBlank(message="Link is required")
+     * @Assert\Length(
+     *      min = 10,
+     *      max = 255,
+     *      minMessage = "Link must be at least 10 characters long",
+     *      maxMessage = "Link cannot be longer than 255 characters"
+     * )
      */
     private $watchLink;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
      * @Groups({"movies_read", "comments_read", "users_read"})
+     *
+     *
      */
     private $stars;
 
@@ -72,7 +106,11 @@ class Movie
 
     /**
      * @ORM\Column(type="datetime")
-     * @Groups({"comments_read", "users_read"})
+     * @Groups({"movies_read", "comments_read", "users_read"})
+     * Assert\Type("\DateTimeInterface")
+     * @var string A "Y-m-d H:i:s" formatted value
+     * @Assert\NotBlank(message="Date is required")
+     *
      */
     private $date;
 
@@ -80,6 +118,8 @@ class Movie
      * @ORM\ManyToOne(targetEntity=User::class, inversedBy="movie_id")
      * @ORM\JoinColumn(nullable=false)
      * @Groups({"movies_read", "comments_read"})
+     * @Assert\NotBlank(message="user is required")
+     *
      */
     private $user;
 
@@ -188,7 +228,7 @@ class Movie
         return $this->date;
     }
 
-    public function setDate(\DateTimeInterface $date): self
+    public function setDate($date): self
     {
         $this->date = $date;
 
